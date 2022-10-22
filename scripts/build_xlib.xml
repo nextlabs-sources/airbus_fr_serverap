@@ -1,0 +1,111 @@
+<!-- build_xlib.xml
+
+Description:
+	This ANT script constructs <project root>/xlib.
+
+	To use this script, you must update properties is <project root>/scripts/build.properties or overide 
+	them from commandline (using -D option). For example:
+		
+		set PATH=C:\depot\external\apache-ant\apache-ant-1.8.4\bin;%PATH%
+		ant -XX:MaxPermSize=512m -Dnlbuildroot=C:/depot/PolicyStudio/dev/BuildScript_1205 -Dexternal.dir=c:/depot/external -Dexternal.dir=c:/depot/external -f scripts/build_xlib.xml
+		
+	or
+		
+		set PATH=C:\depot\external\apache-ant\apache-ant-1.8.4\bin;%PATH%
+		set ANT_OPTS=-XX:MaxPermSize=512m -Dnlbuildroot=%NLBUILDROOT% -Dexternal.dir=%NLEXTERNALDIR% -Dexternal.dir=%NLEXTERNALDIR% 
+		ant -f scripts/build_xlib.xml -v	
+-->
+
+<project name="build_xlib" default="all" basedir="..">
+
+	<!-- Debug 
+	<echoproperties />
+	<fail message="INFO: Debug" />
+	-->
+
+	<!-- Properties -->
+	<property name="nlbuildroot" location="${basedir}" />
+
+	<property file="${nlbuildroot}/scripts/build.properties" />
+	<property file="${nlbuildroot}/scripts/build_common.properties" />
+
+	<!-- Dump properties -->
+	<echoproperties />
+
+	<echo message="INFO: Dump properties completed" />
+
+	<!-- Sanity checks -->
+	<fail message="external.dir is not set" unless="external.dir" />
+	<fail message="external.dir is empty">
+		<condition>
+			<equals arg1="${external.dir}" arg2="" trim="true" />
+		</condition>
+	</fail>
+	<available file="${external.dir}" type="dir" property="local.external.dir_exists" />
+	<fail message="external.dir directory does not exist - ${external.dir}" unless="local.external.dir_exists" />
+
+	<fail message="main.external.dir is not set" unless="main.external.dir" />
+	<fail message="main.external.dir is empty">
+		<condition>
+			<equals arg1="${main.external.dir}" arg2="" trim="true" />
+		</condition>
+	</fail>
+	<available file="${main.external.dir}" type="dir" property="main.external.dir_exists" />
+	<fail message="main.external.dir directory does not exist - ${external.dir2}" unless="main.external.dir_exists" />
+
+	<echo message="INFO: Sanity check completed (no error)" />
+
+	<!-- Targets-->
+	<target name="all" depends="clean, prepare_destiny_jar, prepare_external_java" />
+	
+	
+	<target name="prepare_destiny_jar">
+		<mkdir dir="${lib_jar_dir}" />
+
+		<!-- Extract files -->
+		<unzip src="${xlib_destiny_build_artifacts_zip_file}" dest="${xlib_jar_dir}" overwrite="yes">
+			<patternset>
+				<include name="agent/lib/common-framework.jar" />
+				<include name="agent/lib/common-pf.jar" />
+			</patternset>
+			<mapper type="flatten" />
+		</unzip>
+
+		<!-- Check if file exists 
+		Notes: Currently, Unzip task or ZipFileSet does not have a way to report error if a file
+		cannot be found in a zip file. In addition, there is no simple way to check if a file 
+		exists in Ant. We can call out to Bash to check if a file exists, but that creates an
+		unnecessary dependency on Bash. In the following, we try to check if a file exist using
+		a fake move. Doing this, an error will be generated if a file does not exist.
+		-->
+		<move file="${xlib_jar_dir}/common-framework.jar" todir="${lib_jar_dir}" preservelastmodified="true" overwrite="true" />
+		<move file="${xlib_jar_dir}/common-pf.jar" todir="${lib_jar_dir}" preservelastmodified="true" overwrite="true" />
+	</target>
+	
+	<target name="prepare_external_java">
+		
+		<mkdir dir="${xlib_jar_dir}" />
+		
+		<copy file="${main.external.dir}/ehcache/ehcache-3.0.2/ehcache-3.0.2.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/commons-logging/commons-logging-1.1.1/commons-logging-1.1.1.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${external.dir}/slf4j/slf4j-1.7.7/slf4j-api-1.7.7.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${external.dir}/commons-io/commons-io-2.4/commons-io-2.4.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/ehcache/ehcache-3.0.2/ehcache-3.0.2.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/ehcache/ehcache-3.0.2/ehcache-3.0.2.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		
+		<copy file="${main.external.dir}/hikaricp/3.3.1/HikariCP-3.3.1.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/sqlserver/sqljdbc_6.0/enu/jre8/sqljdbc42.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/sqlserver/sqljdbc_6.0/enu/auth/x64/sqljdbc_auth.dll" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+				
+		<copy file="${main.external.dir}/commons-lang/commons-lang-2.6/commons-lang-2.6.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/commons-configuration/commons-configuration-1.10/commons-configuration-1.10.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+		<copy file="${main.external.dir}/jasypt/jasypt-1.9.2/lib/jasypt-1.9.2.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="false" verbose="true" />
+
+		<move file="${xlib_jar_dir}/HikariCP-3.3.1.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="true" />
+		<move file="${xlib_jar_dir}/sqljdbc42.jar" todir="${xlib_jar_dir}" preservelastmodified="true" overwrite="true" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${xlib_dir}" />
+	</target>
+</project>
